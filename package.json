@@ -1,0 +1,14 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4"
+  },
+  "scripts": {
+    "format": "biome format . --write",
+    "lint": "biome check .",
+    "format:web": "biome format web --write",
+    "format:api": "biome format api --write",
+    "lint:web": "biome check web",
+    "lint:api": "biome check api"
+  }
+}
