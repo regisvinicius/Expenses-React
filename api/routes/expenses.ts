@@ -5,13 +5,13 @@ import { z } from "zod";
 
 const expenseBaseSchema = z.object({
     title: z.string().min(3),
-    amount: z.number().min(0.01).positive(),
+    amount: z.number().min(1).positive(),
     id: z.number().int().positive(),
 });
 
 const expensePostSchema = expenseBaseSchema.omit({ id: true });
 
-type Expense = z.infer<typeof expenseBaseSchema>;
+export type Expense = z.infer<typeof expenseBaseSchema>;
 
 let fakeExpenses: Expense[] = [
     { id: 1, title: "Expense 1", amount: 100 },
@@ -22,6 +22,11 @@ let fakeExpenses: Expense[] = [
 const expensesRoutes = new Hono()
 .get("/", (c) => {
     return c.json({ expenses: fakeExpenses });
+})
+.get("/total", (c) => {
+    const total = fakeExpenses.reduce((acc, e) => acc + e.amount, 0);
+    console.log(total);
+    return c.json({ total });
 })
 .get("/:id", zValidator("param", z.object({ id: z.number() })), (c) => {
     const { id } = c.req.valid("param");
@@ -60,6 +65,7 @@ const expensesRoutes = new Hono()
     }
     fakeExpenses.splice(fakeExpenses.indexOf(expenseToDelete), 1);
     return c.json({ expenses: fakeExpenses, message: "Expense deleted" });
-});
+})
+
 
 export default expensesRoutes;
