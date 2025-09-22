@@ -15,6 +15,7 @@ export const createExpenseRoute = createRoute({
 
 function CreateExpense() {
   const navigate = useNavigate();
+  
   const form = useForm({
     defaultValues: {
       title: '',
@@ -24,7 +25,6 @@ function CreateExpense() {
     onSubmit: async ({ value }) => {
       const response = await api.expenses.$post({ json: value});
       if(!response.ok) {
-        console.error('Failed to create expense');
         return;
       }
       navigate({ to: '/expenses' });
@@ -33,11 +33,9 @@ function CreateExpense() {
 
   return (
     <div className="page-container">
-      {/* Background effects */}
       <div className="page-background"></div>
       <div className="page-background-shapes"></div>
       
-      {/* Floating particles */}
       <div className="floating-particles">
         <div className="particle"></div>
         <div className="particle"></div>

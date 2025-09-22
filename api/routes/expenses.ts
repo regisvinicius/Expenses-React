@@ -5,6 +5,7 @@ import { z } from "zod";
 const expenseBaseSchema = z.object({
   title: z.string().min(3),
   amount: z.number().min(1).positive(),
+  date: z.string().optional(),
   id: z.number().int().positive(),
 });
 
@@ -13,9 +14,9 @@ const expensePostSchema = expenseBaseSchema.omit({ id: true });
 export type Expense = z.infer<typeof expenseBaseSchema>;
 
 const fakeExpenses: Expense[] = [
-  { id: 1, title: "Expense 1", amount: 100 },
-  { id: 2, title: "Expense 2", amount: 200 },
-  { id: 3, title: "Expense 3", amount: 300 },
+  { id: 1, title: "Expense 1", amount: 100, date: "2024-01-15" },
+  { id: 2, title: "Expense 2", amount: 200, date: "2024-01-16" },
+  { id: 3, title: "Expense 3", amount: 300, date: "2024-01-17" },
 ];
 
 const expensesRoutes = new Hono()
@@ -24,7 +25,6 @@ const expensesRoutes = new Hono()
   })
   .get("/total", (c) => {
     const total = fakeExpenses.reduce((acc, e) => acc + e.amount, 0);
-    console.log(total);
     return c.json({ total });
   })
   .get("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), (c) => {
@@ -37,8 +37,13 @@ const expensesRoutes = new Hono()
   })
   .post("/", zValidator("json", expensePostSchema), (c) => {
     const expense = c.req.valid("json");
-    fakeExpenses.push({ ...expense, id: fakeExpenses.length + 1 });
-    return c.json({ expenses: fakeExpenses, message: "Expense created" });
+    const newExpense = { 
+      ...expense, 
+      id: fakeExpenses.length + 1,
+      date: expense.date || new Date().toISOString().split('T')[0]
+    };
+    fakeExpenses.push(newExpense);
+    return c.json({ expense: newExpense, message: "Expense created" });
   })
   .put("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), zValidator("json", expensePostSchema), (c) => {
     const { id } = c.req.valid("param");
