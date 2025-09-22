@@ -7,12 +7,28 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./router";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const elem = document.getElementById("root")!;
 const app = (
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 );
 
@@ -26,4 +42,3 @@ if (import.meta.hot) {
   // The hot module reloading API is not available in production.
   createRoot(elem).render(app);
 }
-

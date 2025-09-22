@@ -1,60 +1,71 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "@/lib/api";
+import type { Expense } from "../../api/routes/expenses";
 import "./index.css";
-import { useEffect, useState } from "react";
-import { Expense } from "../../api/routes/expenses";
+
+async function getTotal() {
+  const response = await api.expenses.total.$get();
+  if (!response.ok) {
+    throw new Error("Failed to fetch total");
+  }
+  const data = await response.json();
+  return data;
+}
+
+async function getExpenses() {
+  const response = await api.expenses.$get();
+  if (!response.ok) {
+    throw new Error("Failed to fetch expenses");
+  }
+  const data = await response.json();
+  return data;
+}
 
 export function App() {
-  const [total, setTotal] = useState(0);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const {
+    isPending: isPendingExpenses,
+    error: errorExpenses,
+    data: dataExpenses,
+  } = useQuery({
+    queryKey: ["expenses"],
+    queryFn: () => getExpenses(),
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/expenses");
-        const data = await response.json();
-        
-       setExpenses(data.expenses);
-      } catch (error) {
-        console.error("Error fetching expenses:", error);
-      }
-    };
+  const {
+    isPending: isPendingTotal,
+    error: errorTotal,
+    data: dataTotal,
+  } = useQuery({
+    queryKey: ["total"],
+    queryFn: () => getTotal(),
+  });
 
-    fetchData();
-  }, []);
+  if (isPendingExpenses || isPendingTotal) {
+    return <div>Loading...</div>;
+  }
 
-  useEffect(() => {
-    const fetchTotalData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/expenses/total");
-        const data = await response.json();
-        
-        if (data.total !== undefined) {
-          setTotal(data.total);
-        }
-      } catch (error) {
-        console.error("Error fetching expenses:", error);
-      }
-    };
+  if (errorExpenses) {
+    return <div>Error: {errorExpenses.message}</div>;
+  }
 
-    fetchTotalData();
-  }, [expenses]);
+  if (errorTotal) {
+    return <div>Error: {errorTotal.message}</div>;
+  }
 
   return (
     <div className="container mx-auto p-4 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>
-            💰 Expenses Dashboard
-          </CardTitle>
+          <CardTitle>💰 Expenses Dashboard</CardTitle>
           <CardDescription>
-            Total Expenses: <span className="font-bold text-green-400">${total.toFixed(2)}</span>
+            Total Expenses:{" "}
+            <span className="font-bold text-green-400">${dataTotal.total.toFixed(2)}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="w-full">
-            ➕ Add New Expense
-          </Button>
+          <Button className="w-full">➕ Add New Expense</Button>
         </CardContent>
       </Card>
 
@@ -64,12 +75,17 @@ export function App() {
           <CardTitle>Recent Expenses</CardTitle>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No expenses yet. Add your first expense!</p>
+          {dataExpenses?.expenses.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              No expenses yet. Add your first expense!
+            </p>
           ) : (
             <div className="space-y-2">
-              {expenses.map((expense: any) => (
-                <div key={expense.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+              {dataExpenses?.expenses.map((expense: Expense) => (
+                <div
+                  key={expense.id}
+                  className="flex justify-between items-center p-3 bg-muted rounded-lg"
+                >
                   <div>
                     <h3 className="font-medium">{expense.title}</h3>
                     <p className="text-sm text-muted-foreground">ID: {expense.id}</p>

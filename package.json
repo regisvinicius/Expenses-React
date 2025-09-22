@@ -1,10 +1,12 @@
 {
   "dependencies": {
     "@hono/zod-validator": "^0.7.3",
+    "@tanstack/react-router": "^1.131.49",
     "zod": "^4.1.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4"
+    "@biomejs/biome": "^2.2.4",
+    "@tanstack/router-plugin": "^1.131.49"
   },
   "scripts": {
     "format": "biome format . --write",
