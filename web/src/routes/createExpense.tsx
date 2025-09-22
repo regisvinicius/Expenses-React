@@ -1,17 +1,37 @@
-import { createRoute, useNavigate } from '@tanstack/react-router';
+import { createRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { rootRoute } from './__root';
 import '../styles/shared.css';
 
 import { useForm } from '@tanstack/react-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { expenseCreateSchema } from '../../../shared/schemas/expense';
+import { editExpenseSearchSchema, validEditSearchSchema, type EditExpenseSearchParams } from '../../../shared/schemas/search-params';
 import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
 
 export const createExpenseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/create-expense',
+  validateSearch: (search: Record<string, unknown>): EditExpenseSearchParams => {
+    // Validate and transform search parameters using Zod
+    const result = editExpenseSearchSchema.safeParse({
+      edit: search.edit === 'true' || search.edit === true,
+      id: search.id ? Number(search.id) : undefined,
+      title: search.title as string | undefined,
+      amount: search.amount ? Number(search.amount) : undefined,
+      date: search.date as string | undefined,
+    });
+
+    if (result.success) {
+      return result.data;
+    } else {
+      // Return safe defaults if validation fails
+      console.warn('Invalid search parameters:', result.error);
+      return {};
+    }
+  },
   component: CreateExpense
 });
 
@@ -20,16 +40,52 @@ export const createExpenseRoute = createRoute({
 function CreateExpense() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const search = useSearch({ from: '/create-expense' });
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   
-  const createExpenseMutation = useMutation({
-    mutationFn: (expenseData: any) => api.createExpense(expenseData),
+  const editModeValidation = validEditSearchSchema.safeParse(search);
+  const isEditMode = editModeValidation.success;
+  const expenseId = isEditMode ? editModeValidation.data.id : undefined;
+  
+  useEffect(() => {
+    if (search.edit && !isEditMode) {
+      navigate({ to: '/expenses' });
+    }
+  }, [search.edit, isEditMode, navigate]);
+
+  const handleCancel = () => {
+    if (form.state.isDirty) {
+      setShowCancelConfirm(true);
+    } else {
+      navigate({ to: '/expenses' });
+    }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelConfirm(false);
+    navigate({ to: '/expenses' });
+  };
+
+  const cancelCancel = () => {
+    setShowCancelConfirm(false);
+  };
+  
+  const expenseMutation = useMutation({
+    mutationFn: (expenseData: any) => {
+      if (isEditMode && expenseId) {
+        return api.updateExpense(expenseId, expenseData);
+      } else {
+        return api.createExpense(expenseData);
+      }
+    },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["total"] });
       
-      setBannerMessage(`✅ ${result.message} - ${result.expense.title} ($${result.expense.amount})`);
+      const action = isEditMode ? 'updated' : 'created';
+      setBannerMessage(`✅ Expense ${action} successfully - ${result.expense.title} ($${result.expense.amount})`);
       setShowBanner(true);
       
       setTimeout(() => {
@@ -38,15 +94,16 @@ function CreateExpense() {
       }, 3000);
     },
     onError: (error: Error) => {
-      alert(`❌ Failed to create expense: ${error.message}`);
+      const action = isEditMode ? 'update' : 'create';
+      alert(`❌ Failed to ${action} expense: ${error.message}`);
     },
   });
   
   const form = useForm({
     defaultValues: {
-      title: '',
-      amount: 0,
-      date: new Date().toISOString().split('T')[0],
+      title: isEditMode ? editModeValidation.data.title : '',
+      amount: isEditMode ? (typeof editModeValidation.data.amount === 'string' ? parseFloat(editModeValidation.data.amount) : editModeValidation.data.amount) : 0,
+      date: isEditMode ? editModeValidation.data.date : new Date().toISOString().split('T')[0],
     },
     validators: {
       onChange: ({ value }) => {
@@ -62,7 +119,7 @@ function CreateExpense() {
       },
     },
     onSubmit: async ({ value }) => {
-      createExpenseMutation.mutate(value);
+      expenseMutation.mutate(value);
     },
   });
 
@@ -107,6 +164,81 @@ function CreateExpense() {
           {bannerMessage}
         </div>
       )}
+
+      {/* Cancel Confirmation Banner */}
+      {showCancelConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(217, 119, 6, 0.3)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          fontSize: '16px',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          animation: 'slideInDown 0.3s ease-out',
+          maxWidth: '90vw',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px'
+          }}>
+            ⚠️
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>
+              You have unsaved changes!
+            </p>
+            <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>
+              Are you sure you want to leave without saving?
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+            <Button
+              size="sm"
+              onClick={confirmCancel}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: 'white',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.75rem'
+              }}
+            >
+              Leave
+            </Button>
+            <Button
+              size="sm"
+              onClick={cancelCancel}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.75rem'
+              }}
+            >
+              Stay
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="page-background"></div>
       <div className="page-background-shapes"></div>
@@ -126,9 +258,9 @@ function CreateExpense() {
       <div className="page-content-wrapper">
         <div className="page-card">
           <div className="page-header">
-            <h1 className="page-title">➕ Create New Expense</h1>
+            <h1 className="page-title">{isEditMode ? '✏️ Edit Expense' : '➕ Create New Expense'}</h1>
             <p className="page-description">
-              Add a new expense to track your spending
+              {isEditMode ? 'Update your expense details' : 'Add a new expense to track your spending'}
             </p>
           </div>
           
@@ -284,15 +416,15 @@ function CreateExpense() {
                 <button 
                   type="submit" 
                   className="primary-button"
-                  disabled={createExpenseMutation.isPending}
+                  disabled={expenseMutation.isPending}
                 >
-                  {createExpenseMutation.isPending ? '💾 Saving...' : '💾 Save Expense'}
+                  {expenseMutation.isPending ? '💾 Saving...' : (isEditMode ? '💾 Update Expense' : '💾 Save Expense')}
                 </button>
                 <button 
                   type="button" 
                   className="primary-button" 
                   style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-                  onClick={() => form.reset()}
+                  onClick={handleCancel}
                 >
                   ❌ Cancel
                 </button>
