@@ -30,6 +30,17 @@
   font-size: 1.5rem;
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.nav-brand:hover {
+  transform: translateY(-2px) scale(1.05);
+  color: #f093fb;
+  text-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
 }
 
 .nav-icon {

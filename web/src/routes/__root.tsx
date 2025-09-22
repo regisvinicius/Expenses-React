@@ -9,10 +9,10 @@ export const rootRoute = createRootRoute({
       <>
         <nav className="navbar">
           <div className="nav-container">
-            <div className="nav-brand">
-              <span className="nav-icon">💰</span>
-              <span className="nav-title">ExpenseTracker</span>
-            </div>
+              <Link to="/" className="nav-brand">
+                <span className="nav-icon">💰</span>
+                <span className="nav-title">ExpenseTracker</span>
+              </Link>
             <div className="nav-links">
               <Link to="/" className="nav-link">
                 <span className="nav-link-icon">🏠</span>
