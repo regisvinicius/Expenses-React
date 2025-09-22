@@ -149,9 +149,14 @@ export function Expenses() {
                           </CardTitle>
                           <CardDescription style={{ 
                             color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem',
+                            marginBottom: '0.25rem'
                           }}>
-                            ID: {expense.id}
+                            📅 {new Date(expense.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </CardDescription>
                         </div>
                         <div style={{ textAlign: 'right' }}>

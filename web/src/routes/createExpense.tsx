@@ -3,9 +3,11 @@ import { rootRoute } from './__root';
 import '../styles/shared.css';
 
 import { useForm } from '@tanstack/react-form';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { expenseCreateSchema } from '../../../shared/schemas/expense';
+import { Calendar } from '@/components/ui/calendar';
 
 export const createExpenseRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -21,35 +23,46 @@ function CreateExpense() {
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
   
+  const createExpenseMutation = useMutation({
+    mutationFn: (expenseData: any) => api.createExpense(expenseData),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["total"] });
+      
+      setBannerMessage(`✅ ${result.message} - ${result.expense.title} ($${result.expense.amount})`);
+      setShowBanner(true);
+      
+      setTimeout(() => {
+        setShowBanner(false);
+        navigate({ to: '/expenses' });
+      }, 3000);
+    },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create expense: ${error.message}`);
+    },
+  });
+  
   const form = useForm({
     defaultValues: {
       title: '',
       amount: 0,
       date: new Date().toISOString().split('T')[0],
     },
-    onSubmit: async ({ value }) => {
-      try {
-        const result = await api.createExpense(value);
-        // Invalidate queries to refresh the data
-        await queryClient.invalidateQueries({ queryKey: ["expenses"] });
-        await queryClient.invalidateQueries({ queryKey: ["total"] });
-        
-        // Show success banner
-        setBannerMessage(`✅ ${result.message} - ${result.expense.title} ($${result.expense.amount})`);
-        setShowBanner(true);
-        
-        // Auto-hide banner and navigate after 3 seconds
-        setTimeout(() => {
-          setShowBanner(false);
-          navigate({ to: '/expenses' });
-        }, 3000);
-      } catch (error) {
-        if (error instanceof Error) {
-          alert(`❌ Failed to create expense: ${error.message}`);
-        } else {
-          alert('❌ Failed to create expense: Unknown error');
+    validators: {
+      onChange: ({ value }) => {
+        try {
+          expenseCreateSchema.parse(value);
+          return undefined;
+        } catch (error: any) {
+          if (error.errors && error.errors.length > 0) {
+            return error.errors[0].message;
+          }
+          return 'Validation error';
         }
-      }
+      },
+    },
+    onSubmit: async ({ value }) => {
+      createExpenseMutation.mutate(value);
     },
   });
 
@@ -132,8 +145,7 @@ function CreateExpense() {
                 <form.Field
                   name="title"
                   validators={{
-                    onChange: ({ value }) =>
-                      !value ? 'Title is required' : undefined,
+                    onChange: expenseCreateSchema.shape.title,
                   }}
                 >
                   {(field) => (
@@ -179,8 +191,7 @@ function CreateExpense() {
                 <form.Field
                   name="amount"
                   validators={{
-                    onChange: ({ value }) =>
-                      !value || value <= 0 ? 'Amount must be greater than 0' : undefined,
+                    onChange: expenseCreateSchema.shape.amount,
                   }}
                 >
                   {(field) => (
@@ -229,8 +240,7 @@ function CreateExpense() {
                 <form.Field
                   name="date"
                   validators={{
-                    onChange: ({ value }) =>
-                      !value ? 'Date is required' : undefined,
+                    onChange: expenseCreateSchema.shape.date,
                   }}
                 >
                   {(field) => (
@@ -246,23 +256,21 @@ function CreateExpense() {
                       >
                         Date
                       </label>
-                      <input
-                        id={field.name}
-                        name={field.name}
-                        type="date"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          color: 'white',
-                          backdropFilter: 'blur(10px)',
-                          fontSize: '1rem'
+                      <Calendar 
+                        mode="single"
+                        selected={field.state.value ? new Date(field.state.value) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            field.handleChange(`${year}-${month}-${day}`);
+                          } else {
+                            field.handleChange('');
+                          }
                         }}
+                        className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl"
+                        disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                       />
                       {field.state.meta.errors ? (
                         <em style={{ color: 'red' }}>{field.state.meta.errors.join(', ')}</em>
@@ -276,9 +284,9 @@ function CreateExpense() {
                 <button 
                   type="submit" 
                   className="primary-button"
-                  disabled={form.state.isSubmitting}
+                  disabled={createExpenseMutation.isPending}
                 >
-                  {form.state.isSubmitting ? '💾 Saving...' : '💾 Save Expense'}
+                  {createExpenseMutation.isPending ? '💾 Saving...' : '💾 Save Expense'}
                 </button>
                 <button 
                   type="button" 

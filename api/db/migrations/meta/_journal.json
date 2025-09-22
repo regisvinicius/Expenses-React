@@ -8,6 +8,13 @@
       "when": 1758571977897,
       "tag": "0000_white_network",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758580936478,
+      "tag": "0001_rainy_zarek",
+      "breakpoints": true
     }
   ]
 }

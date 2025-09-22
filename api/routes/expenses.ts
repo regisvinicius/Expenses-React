@@ -3,7 +3,8 @@ import { Hono, MiddlewareHandler } from "hono";
 import { z } from "zod";
 import { eq, sum, and } from "drizzle-orm";
 import db from "../db";
-import { expenses as expensesTable } from "../db/schema";
+import { expenses as expensesTable, expenseInsertSchema ,expenseSelectSchema } from "../db/schema";
+import { expenseBaseSchema, expenseCreateSchema, type Expense } from "../../shared/schemas/expense";
 
 // Define the user type and extend Hono's context
 interface User {
@@ -18,15 +19,7 @@ declare module "hono" {
   }
 }
 
-const expenseBaseSchema = z.object({
-  title: z.string().min(3),
-  amount: z.number().min(1).positive(), 
-  date: z.string().optional(),
-  id: z.number().int().positive(),
-  userId: z.string(),
-});
-
-const expensePostSchema = expenseBaseSchema.omit({ id: true, userId: true });
+// Using shared schemas from ../shared/schemas/expense.ts
 
 // Authentication middleware using Hono's built-in approach
 const authMiddleware: MiddlewareHandler = async (c, next) => {
@@ -89,33 +82,40 @@ const expensesRoutes = new Hono()
   .get("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), async (c) => {
     const { id } = c.req.valid("param");
     const user = c.get("user");
+    
     const expense = await db.select().from(expensesTable).where(and(eq(expensesTable.id, id), eq(expensesTable.userId, user.id)));
     if (!expense[0]) {
       return c.notFound();
     }
     return c.json({ expense: expense[0] });
   })
-  .post("/", zValidator("json", expensePostSchema), async (c) => {
+    .post("/", zValidator("json", expenseCreateSchema), async (c) => {
     const user = c.get("user");
     const expense = c.req.valid("json");
-    const newExpense = await db.insert(expensesTable).values({
+    const validatedExpense = expenseInsertSchema.parse({
       title: expense.title,
       amount: expense.amount.toString(),
       date: expense.date || new Date().toISOString().split('T')[0],
       userId: user.id,
-    }).returning();
+    });
+    const newExpense = await db.insert(expensesTable).values(validatedExpense).returning();
     return c.json({ expense: newExpense[0], message: "Expense created" });
   })
-  .put("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), zValidator("json", expensePostSchema), async (c) => {
+    .put("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), zValidator("json", expenseCreateSchema), async (c) => {
     const { id } = c.req.valid("param");
     const user = c.get("user");
     const expenseData = c.req.valid("json");
-    
+    const validatedExpense = expenseInsertSchema.parse({
+      title: expenseData.title,
+      amount: expenseData.amount.toString(),
+      date: expenseData.date || new Date().toISOString().split('T')[0],
+      userId: user.id,
+    });
     const updatedExpense = await db.update(expensesTable)
       .set({
-        title: expenseData.title,
-        amount: expenseData.amount.toString(),
-        date: expenseData.date || new Date().toISOString().split('T')[0],
+        title: validatedExpense.title,
+        amount: validatedExpense.amount.toString(),
+        date: validatedExpense.date || new Date().toISOString().split('T')[0],
         updatedAt: new Date(),
       })
       .where(and(eq(expensesTable.id, id), eq(expensesTable.userId, user.id)))
