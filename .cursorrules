@@ -1,0 +1,41 @@
+# Cursor Rules for Expenses React Project
+
+## Code Style & Formatting
+- Always use Bun instead of Node.js, npm, pnpm, or vite
+- Follow Biome configuration for formatting and linting
+- Use TypeScript with strict type checking
+- Prefer functional components with hooks
+- Use TanStack Query for all state management and API calls
+- Do not add comments to code unless explicitly requested
+
+## Architecture Patterns
+- Use shared Zod schemas between frontend and backend
+- Implement proper error handling with user-friendly messages
+- Use React Query mutations for form submissions
+- Implement form dirty state protection for navigation
+- Use glassmorphism design patterns consistently
+
+## Database & API
+- Use Drizzle ORM for database operations
+- Implement proper authentication middleware
+- Use PostgreSQL with proper migrations
+- Validate all inputs with Zod schemas
+
+## UI/UX Guidelines
+- Use beautiful banners for success/error messages instead of alerts
+- Implement proper loading states
+- Use consistent color schemes and animations
+- Provide clear user feedback for all actions
+
+## File Organization
+- Keep shared schemas in `/shared/schemas/`
+- Use proper TypeScript interfaces and types
+- Organize components by feature
+- Use absolute imports with path mapping
+
+## Best Practices
+- Always validate data at runtime with Zod
+- Use proper error boundaries
+- Implement optimistic updates where appropriate
+- Follow React Query best practices
+- Use proper TypeScript generics and type safety

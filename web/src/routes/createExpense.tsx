@@ -3,7 +3,7 @@ import { rootRoute } from './__root';
 import '../styles/shared.css';
 
 import { useForm } from '@tanstack/react-form';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { expenseCreateSchema } from '../../../shared/schemas/expense';
@@ -41,9 +41,23 @@ function CreateExpense() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const search = useSearch({ from: '/create-expense' });
-  const [showBanner, setShowBanner] = useState(false);
-  const [bannerMessage, setBannerMessage] = useState('');
+  // Using TanStack Query for state management instead of useState
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  
+  // Using TanStack Query for success/error message state
+  const { data: successMessage } = useQuery({
+    queryKey: ['success-message'],
+    queryFn: () => null,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  const { data: errorMessage } = useQuery({
+    queryKey: ['error-message'],
+    queryFn: () => null,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
   
   const editModeValidation = validEditSearchSchema.safeParse(search);
   const isEditMode = editModeValidation.success;
@@ -81,21 +95,32 @@ function CreateExpense() {
       }
     },
     onSuccess: (result) => {
+      // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["total"] });
       
+      // Set success data in query cache for UI to consume
       const action = isEditMode ? 'updated' : 'created';
-      setBannerMessage(`✅ Expense ${action} successfully - ${result.expense.title} ($${result.expense.amount})`);
-      setShowBanner(true);
+      queryClient.setQueryData(['success-message'], {
+        message: `✅ Expense ${action} successfully - ${result.expense.title} ($${result.expense.amount})`,
+        show: true,
+        timestamp: Date.now()
+      });
       
+      // Navigate after a delay
       setTimeout(() => {
-        setShowBanner(false);
+        queryClient.setQueryData(['success-message'], { show: false });
         navigate({ to: '/expenses' });
       }, 3000);
     },
     onError: (error: Error) => {
       const action = isEditMode ? 'update' : 'create';
-      alert(`❌ Failed to ${action} expense: ${error.message}`);
+      // Set error in query cache
+      queryClient.setQueryData(['error-message'], {
+        message: `❌ Failed to ${action} expense: ${error.message}`,
+        show: true,
+        timestamp: Date.now()
+      });
     },
   });
   
@@ -126,7 +151,7 @@ function CreateExpense() {
   return (
     <div className="page-container">
       {/* Success Banner */}
-      {showBanner && (
+      {successMessage?.show && (
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -161,7 +186,7 @@ function CreateExpense() {
           }}>
             ✅
           </div>
-          {bannerMessage}
+          {successMessage?.message}
         </div>
       )}
 
