@@ -12,7 +12,7 @@ const expensePostSchema = expenseBaseSchema.omit({ id: true });
 
 export type Expense = z.infer<typeof expenseBaseSchema>;
 
-let fakeExpenses: Expense[] = [
+const fakeExpenses: Expense[] = [
   { id: 1, title: "Expense 1", amount: 100 },
   { id: 2, title: "Expense 2", amount: 200 },
   { id: 3, title: "Expense 3", amount: 300 },
@@ -27,9 +27,9 @@ const expensesRoutes = new Hono()
     console.log(total);
     return c.json({ total });
   })
-  .get("/:id", zValidator("param", z.object({ id: z.number() })), (c) => {
+  .get("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), (c) => {
     const { id } = c.req.valid("param");
-    const expense = fakeExpenses.find((e) => e.id === Number(id));
+    const expense = fakeExpenses.find((e) => e.id === id);
     if (!expense) {
       return c.notFound();
     }
@@ -40,23 +40,23 @@ const expensesRoutes = new Hono()
     fakeExpenses.push({ ...expense, id: fakeExpenses.length + 1 });
     return c.json({ expenses: fakeExpenses, message: "Expense created" });
   })
-  .put("/:id", zValidator("json", expenseBaseSchema), (c) => {
-    const expense = c.req.valid("json");
-    const expenseDB = fakeExpenses.find((e) => e.id === Number(expense.id));
+  .put("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), zValidator("json", expensePostSchema), (c) => {
+    const { id } = c.req.valid("param");
+    const expenseData = c.req.valid("json");
+    const expenseDB = fakeExpenses.find((e) => e.id === id);
     if (!expenseDB) {
       return c.json({ message: "Expense not found" }, 404);
     }
-    fakeExpenses.splice(fakeExpenses.indexOf(expenseDB), 1);
-    fakeExpenses.push({ ...expenseDB, ...expense });
-    fakeExpenses = fakeExpenses.map((e) =>
-      e.id === Number(expense.id) ? { ...e, ...expense } : e,
-    );
+    
+    const updatedExpense = { ...expenseData, id };
+    const index = fakeExpenses.findIndex((e) => e.id === id);
+    fakeExpenses[index] = updatedExpense;
 
-    return c.json({ expense, message: "Expense updated" });
+    return c.json({ expense: updatedExpense, message: "Expense updated" });
   })
-  .delete("/:id", zValidator("param", z.object({ id: z.number() })), (c) => {
+  .delete("/:id", zValidator("param", z.object({ id: z.string().transform(Number) })), (c) => {
     const { id } = c.req.valid("param");
-    const expenseToDelete = fakeExpenses.find((e) => e.id !== Number(id));
+    const expenseToDelete = fakeExpenses.find((e) => e.id === id);
     if (!expenseToDelete) {
       return c.notFound();
     }

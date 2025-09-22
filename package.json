@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "@hono/zod-validator": "^0.7.3",
+    "@tanstack/react-form": "^1.23.0",
     "@tanstack/react-router": "^1.131.49",
+    "i": "^0.3.7",
     "zod": "^4.1.9"
   },
   "devDependencies": {
