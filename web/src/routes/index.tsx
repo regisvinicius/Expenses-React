@@ -1,4 +1,4 @@
-import { createRoute } from '@tanstack/react-router';
+import { createRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,15 +13,11 @@ export const indexRoute = createRoute({
 });
 
 async function getTotal() {
-  const response = await api.expenses.total.$get();
-  if (!response.ok) {
-    throw new Error("Failed to fetch total");
-  }
-  const data = await response.json();
-  return data;
+  return api.getExpensesTotal();
 }
 
 export function Index() {
+  const navigate = useNavigate();
 
   const {
     isPending: isPendingTotal,
@@ -64,7 +60,12 @@ export function Index() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="add-button w-full">➕ Add New Expense</Button>
+            <Button 
+              className="add-button w-full" 
+              onClick={() => navigate({ to: '/create-expense' })}
+            >
+              ➕ Add New Expense
+            </Button>
           </CardContent>
         </Card>
       </div>

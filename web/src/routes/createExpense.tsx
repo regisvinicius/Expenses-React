@@ -3,6 +3,8 @@ import { rootRoute } from './__root';
 import '../styles/shared.css';
 
 import { useForm } from '@tanstack/react-form';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { api } from '@/lib/api';
 
 export const createExpenseRoute = createRoute({
@@ -15,6 +17,9 @@ export const createExpenseRoute = createRoute({
 
 function CreateExpense() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showBanner, setShowBanner] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState('');
   
   const form = useForm({
     defaultValues: {
@@ -23,16 +28,73 @@ function CreateExpense() {
       date: new Date().toISOString().split('T')[0],
     },
     onSubmit: async ({ value }) => {
-      const response = await api.expenses.$post({ json: value});
-      if(!response.ok) {
-        return;
+      try {
+        const result = await api.createExpense(value);
+        // Invalidate queries to refresh the data
+        await queryClient.invalidateQueries({ queryKey: ["expenses"] });
+        await queryClient.invalidateQueries({ queryKey: ["total"] });
+        
+        // Show success banner
+        setBannerMessage(`✅ ${result.message} - ${result.expense.title} ($${result.expense.amount})`);
+        setShowBanner(true);
+        
+        // Auto-hide banner and navigate after 3 seconds
+        setTimeout(() => {
+          setShowBanner(false);
+          navigate({ to: '/expenses' });
+        }, 3000);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(`❌ Failed to create expense: ${error.message}`);
+        } else {
+          alert('❌ Failed to create expense: Unknown error');
+        }
       }
-      navigate({ to: '/expenses' });
     },
   });
 
   return (
     <div className="page-container">
+      {/* Success Banner */}
+      {showBanner && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(34, 197, 94, 0.3)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          fontSize: '16px',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          animation: 'slideInDown 0.3s ease-out',
+          maxWidth: '90vw',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px'
+          }}>
+            ✅
+          </div>
+          {bannerMessage}
+        </div>
+      )}
+      
       <div className="page-background"></div>
       <div className="page-background-shapes"></div>
       

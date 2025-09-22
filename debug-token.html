@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Token</title>
+</head>
+<body>
+    <h1>Token Debug Tool</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="checkTokens()">Check Tokens</button>
+    <button onclick="testApiCall()">Test API Call</button>
+    <button onclick="clearTokens()">Clear Tokens</button>
+    
+    <script>
+        function checkTokens() {
+            const token = localStorage.getItem('kinde_token');
+            const idToken = localStorage.getItem('kinde_id_token');
+            
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Token Status:</h3>
+                <p><strong>Access Token:</strong> ${token ? 'Found (' + token.substring(0, 30) + '...)' : 'Not found'}</p>
+                <p><strong>ID Token:</strong> ${idToken ? 'Found (' + idToken.substring(0, 30) + '...)' : 'Not found'}</p>
+                <p><strong>Token Length:</strong> ${token ? token.length : 0} characters</p>
+            `;
+        }
+        
+        async function testApiCall() {
+            const token = localStorage.getItem('kinde_token');
+            
+            if (!token) {
+                alert('No token found! Please log in first.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/test/auth-check', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                const results = document.getElementById('results');
+                results.innerHTML += `
+                    <h3>API Test Results:</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong> <pre>${JSON.stringify(data, null, 2)}</pre></p>
+                `;
+            } catch (error) {
+                console.error('API Test Error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function clearTokens() {
+            localStorage.removeItem('kinde_token');
+            localStorage.removeItem('kinde_id_token');
+            localStorage.removeItem('kinde_state');
+            alert('Tokens cleared!');
+            checkTokens();
+        }
+        
+        // Auto-check on load
+        checkTokens();
+    </script>
+</body>
+</html>

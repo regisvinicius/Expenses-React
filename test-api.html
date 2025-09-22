@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Authentication Test</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="testAPI()">Test API Call</button>
+    <button onclick="checkTokens()">Check Tokens</button>
+    
+    <script>
+        function checkTokens() {
+            const token = localStorage.getItem('kinde_token');
+            const idToken = localStorage.getItem('kinde_id_token');
+            
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Token Status:</h3>
+                <p><strong>Access Token:</strong> ${token ? 'Found (' + token.substring(0, 20) + '...)' : 'Not found'}</p>
+                <p><strong>ID Token:</strong> ${idToken ? 'Found (' + idToken.substring(0, 20) + '...)' : 'Not found'}</p>
+            `;
+        }
+        
+        async function testAPI() {
+            const token = localStorage.getItem('kinde_token');
+            
+            if (!token) {
+                alert('No token found! Please log in first.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/test/auth-check', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                const results = document.getElementById('results');
+                results.innerHTML = `
+                    <h3>API Test Results:</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong> ${JSON.stringify(data, null, 2)}</p>
+                `;
+            } catch (error) {
+                console.error('API Test Error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Auto-check tokens on page load
+        checkTokens();
+    </script>
+</body>
+</html>

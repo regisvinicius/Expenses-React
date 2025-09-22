@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import type { Expense } from "../../../api/routes/expenses";
+import type { Expense } from "../../../api/db/schema";
 import '../styles/shared.css';
 
 export const expensesRoute = createRoute({
@@ -16,12 +16,7 @@ export const expensesRoute = createRoute({
 
 
 async function getExpenses() {
-  const response = await api.expenses.$get();
-  if (!response.ok) {
-    throw new Error("Failed to fetch expenses");
-  }
-  const data = await response.json();
-  return data;
+  return api.getExpenses();
 }
 
 export function Expenses() {
