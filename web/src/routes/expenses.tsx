@@ -2,27 +2,19 @@ import { createRoute } from '@tanstack/react-router';
 import { rootRoute } from './__root';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit, Trash2, Plus, Receipt } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import type { Expense } from "../../../api/db/schema";
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import '../styles/shared.css';
-
-export const expensesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/expenses',
-  component: Expenses,
-  },
-);
-
 
 async function getExpenses() {
   return api.getExpenses();
 }
 
-export function Expenses() {
+const Expenses = React.memo(function Expenses() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showBanner, setShowBanner] = useState(false);
@@ -35,6 +27,8 @@ export function Expenses() {
   } = useQuery({
     queryKey: ["expenses"],
     queryFn: () => getExpenses(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Delete expense mutation
@@ -59,13 +53,14 @@ export function Expenses() {
     },
   });
 
-  const handleDeleteExpense = (expenseId: number, expenseTitle: string) => {
+  // Optimized event handlers with useCallback
+  const handleDeleteExpense = useCallback((expenseId: number, expenseTitle: string) => {
     if (window.confirm(`Are you sure you want to delete "${expenseTitle}"?`)) {
       deleteExpenseMutation.mutate(expenseId);
     }
-  };
+  }, [deleteExpenseMutation]);
 
-  const handleEditExpense = (expense: Expense) => {
+  const handleEditExpense = useCallback((expense: Expense) => {
     // Navigate to edit page with expense data
     navigate({ 
       to: '/create-expense', 
@@ -77,8 +72,26 @@ export function Expenses() {
         date: expense.date
       }
     });
-  };
+  }, [navigate]);
 
+  const handleAddExpense = useCallback(() => {
+    navigate({ to: '/create-expense' });
+  }, [navigate]);
+
+  // Memoize expensive style objects
+  const emptyStateStyles = useMemo(() => ({
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    textAlign: 'center' as const,
+    padding: '2rem'
+  }), []);
+
+  const buttonStyles = useMemo(() => ({
+    display: 'flex',
+    alignItems: 'center' as const,
+    gap: '0.5rem'
+  }), []);
 
   if (isPendingExpenses) {
     return (
@@ -183,19 +196,19 @@ export function Expenses() {
           
           <div className="page-content">
             {dataExpenses?.expenses.length === 0 ? (
-              <Card style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                textAlign: 'center',
-                padding: '2rem'
-              }}>
-                <CardContent style={{ padding: '2rem' }}>
+              <Card               style={emptyStateStyles}>
+                <CardContent style={{ padding: '2rem', textAlign: 'center' }}>
+                  <Receipt style={{ width: '3rem', height: '3rem', margin: '0 auto 1rem auto', color: 'rgba(255, 255, 255, 0.6)' }} />
                   <p style={{ fontSize: '1.2rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '2rem' }}>
                     No expenses yet. Add your first expense!
                   </p>
-                  <Button className="primary-button">
-                    ➕ Add First Expense
+                  <Button 
+                    className="primary-button"
+                    onClick={handleAddExpense}
+                    style={{ ...buttonStyles, margin: '0 auto' }}
+                  >
+                    <Plus style={{ width: '1rem', height: '1rem' }} />
+                    Add First Expense
                   </Button>
                 </CardContent>
               </Card>
@@ -232,23 +245,23 @@ export function Expenses() {
                           ${expense.amount}
                         </p>
                         <div className="expense-actions">
-                          <Button
-                            className="action-button edit"
-                            onClick={() => handleEditExpense(expense)}
-                            style={{ display: 'flex', alignItems: 'center' }}
-                          >
-                            <Edit className="w-3 h-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            className="action-button delete"
-                            onClick={() => handleDeleteExpense(expense.id, expense.title)}
-                            disabled={deleteExpenseMutation.isPending}
-                            style={{ display: 'flex', alignItems: 'center' }}
-                          >
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            Delete
-                          </Button>
+                        <Button
+                          className="action-button edit"
+                          onClick={() => handleEditExpense(expense)}
+                          style={buttonStyles}
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          className="action-button delete"
+                          onClick={() => handleDeleteExpense(expense.id, expense.title)}
+                          disabled={deleteExpenseMutation.isPending}
+                          style={buttonStyles}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Delete
+                        </Button>
                         </div>
                       </div>
                     </div>
@@ -261,4 +274,12 @@ export function Expenses() {
       </div>
     </div>
   );
-}
+});
+
+export { Expenses };
+
+export const expensesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/expenses',
+  component: Expenses,
+});

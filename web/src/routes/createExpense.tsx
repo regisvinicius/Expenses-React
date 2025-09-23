@@ -4,7 +4,7 @@ import '../styles/shared.css';
 
 import { useForm } from '@tanstack/react-form';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { expenseCreateSchema } from '../../../shared/schemas/expense';
 import { editExpenseSearchSchema, validEditSearchSchema, type EditExpenseSearchParams } from '../../../shared/schemas/search-params';
@@ -12,33 +12,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export const createExpenseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/create-expense',
-  validateSearch: (search: Record<string, unknown>): EditExpenseSearchParams => {
-    // Validate and transform search parameters using Zod
-    const result = editExpenseSearchSchema.safeParse({
-      edit: search.edit === 'true' || search.edit === true,
-      id: search.id ? Number(search.id) : undefined,
-      title: search.title as string | undefined,
-      amount: search.amount ? Number(search.amount) : undefined,
-      date: search.date as string | undefined,
-    });
 
-    if (result.success) {
-      return result.data;
-    } else {
-      // Return safe defaults if validation fails
-      console.warn('Invalid search parameters:', result.error);
-      return {};
-    }
-  },
-  component: CreateExpense
-});
-
-
-
-function CreateExpense() {
+const CreateExpense = React.memo(function CreateExpense() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const search = useSearch({ from: '/create-expense' });
@@ -70,22 +45,23 @@ function CreateExpense() {
     }
   }, [search.edit, isEditMode, navigate]);
 
-  const handleCancel = () => {
+  // Optimized event handlers with useCallback
+  const handleCancel = useCallback(() => {
     if (form.state.isDirty) {
       setShowCancelConfirm(true);
     } else {
       navigate({ to: '/expenses' });
     }
-  };
+  }, [form.state.isDirty, navigate]);
 
-  const confirmCancel = () => {
+  const confirmCancel = useCallback(() => {
     setShowCancelConfirm(false);
     navigate({ to: '/expenses' });
-  };
+  }, [navigate]);
 
-  const cancelCancel = () => {
+  const cancelCancel = useCallback(() => {
     setShowCancelConfirm(false);
-  };
+  }, []);
   
   const expenseMutation = useMutation({
     mutationFn: (expenseData: any) => {
@@ -443,4 +419,33 @@ function CreateExpense() {
       </div>
     </div>
   );
-}
+});
+
+export { CreateExpense };
+
+export const createExpenseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/create-expense',
+  validateSearch: (search: Record<string, unknown>): EditExpenseSearchParams => {
+    const result = editExpenseSearchSchema.safeParse({
+      edit: search.edit === 'true' || search.edit === true,
+      id: search.id ? Number(search.id) : undefined,
+      title: search.title as string | undefined,
+      amount: search.amount ? (typeof search.amount === 'string' ? parseFloat(search.amount) : Number(search.amount)) : undefined,
+      date: search.date as string | undefined,
+    });
+    
+    if (result.success) {
+      return result.data;
+    } else {
+      return {
+        edit: false,
+        id: undefined,
+        title: undefined,
+        amount: undefined,
+        date: undefined,
+      };
+    }
+  },
+  component: CreateExpense
+});

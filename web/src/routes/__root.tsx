@@ -2,7 +2,7 @@ import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import './navbar.css';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { LoginPrompt } from '../components/LoginPrompt';
-import { DollarSign, Home, Info, BarChart3, Plus, User, LogOut } from 'lucide-react';
+import { DollarSign, Home, Info, BarChart3, Plus, User, LogOut, Loader2 } from 'lucide-react';
 // import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 
@@ -17,9 +17,12 @@ function Navbar() {
           <span className="nav-title">ExpenseTracker</span>
         </Link>
         <div className="nav-links">
-          {isLoading ? (
-            <span className="nav-link">Loading...</span>
-          ) : user ? (
+                {isLoading ? (
+                  <span className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Loader2 style={{ width: '1rem', height: '1rem' }} className="animate-spin" />
+                    Loading...
+                  </span>
+                ) : user ? (
             <>
               <Link to="/" className="nav-link">
                 <Home className="nav-link-icon" style={{ width: '1.1rem', height: '1.1rem' }} />
@@ -91,7 +94,7 @@ function MainContent() {
         <div className="page-content-wrapper">
           <div className="page-card">
             <div style={{ textAlign: 'center', color: 'white', padding: '2rem' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+              <Loader2 style={{ width: '2rem', height: '2rem', marginBottom: '1rem' }} className="animate-spin mx-auto" />
               <p>Loading...</p>
             </div>
           </div>
