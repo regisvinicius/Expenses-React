@@ -1,4 +1,5 @@
 import { useAuth } from '../lib/auth';
+import { Lock, LogIn, BarChart3, Plus, TrendingUp, Save } from 'lucide-react';
 
 export function LoginPrompt() {
   const { login } = useAuth();
@@ -23,7 +24,10 @@ export function LoginPrompt() {
       <div className="page-content-wrapper">
         <div className="page-card">
           <div className="page-header">
-            <h1 className="page-title">🔐 Authentication Required</h1>
+            <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              <Lock style={{ width: '2rem', height: '2rem' }} />
+              Authentication Required
+            </h1>
             <p className="page-description">
               Please log in to access the expense tracker
             </p>
@@ -46,7 +50,8 @@ export function LoginPrompt() {
                   gap: '0.5rem'
                 }}
               >
-                🚀 Login with Kinde
+                <LogIn style={{ width: '1.2rem', height: '1.2rem' }} />
+                Login
               </button>
             </div>
             
@@ -59,10 +64,22 @@ export function LoginPrompt() {
             }}>
               <h3 style={{ color: 'white', marginBottom: '1rem' }}>Features Available After Login:</h3>
               <ul style={{ color: 'white', textAlign: 'left', listStyle: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '0.5rem' }}>📊 View your expenses</li>
-                <li style={{ marginBottom: '0.5rem' }}>➕ Create new expenses</li>
-                <li style={{ marginBottom: '0.5rem' }}>📈 Track spending patterns</li>
-                <li style={{ marginBottom: '0.5rem' }}>💾 Save your data securely</li>
+                <li style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <BarChart3 style={{ width: '1rem', height: '1rem' }} />
+                  View your expenses
+                </li>
+                <li style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Plus style={{ width: '1rem', height: '1rem' }} />
+                  Create new expenses
+                </li>
+                <li style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TrendingUp style={{ width: '1rem', height: '1rem' }} />
+                  Track spending patterns
+                </li>
+                <li style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Save style={{ width: '1rem', height: '1rem' }} />
+                  Save your data securely
+                </li>
               </ul>
             </div>
           </div>

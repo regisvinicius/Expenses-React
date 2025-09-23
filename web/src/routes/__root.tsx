@@ -2,6 +2,7 @@ import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import './navbar.css';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { LoginPrompt } from '../components/LoginPrompt';
+import { DollarSign, Home, Info, BarChart3, Plus, User, LogOut } from 'lucide-react';
 // import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 
@@ -12,7 +13,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="nav-container">
         <Link to="/" className="nav-brand">
-          <span className="nav-icon">💰</span>
+          <DollarSign className="nav-icon" style={{ width: '2rem', height: '2rem' }} />
           <span className="nav-title">ExpenseTracker</span>
         </Link>
         <div className="nav-links">
@@ -21,24 +22,25 @@ function Navbar() {
           ) : user ? (
             <>
               <Link to="/" className="nav-link">
-                <span className="nav-link-icon">🏠</span>
+                <Home className="nav-link-icon" style={{ width: '1.1rem', height: '1.1rem' }} />
                 Home
               </Link>
               <Link to="/about" className="nav-link">
-                <span className="nav-link-icon">ℹ️</span>
+                <Info className="nav-link-icon" style={{ width: '1.1rem', height: '1.1rem' }} />
                 About
               </Link>
               <Link to="/expenses" className="nav-link">
-                <span className="nav-link-icon">📊</span>
+                <BarChart3 className="nav-link-icon" style={{ width: '1.1rem', height: '1.1rem' }} />
                 Expenses
               </Link>
               <Link to="/create-expense" className="nav-link">
-                <span className="nav-link-icon">➕</span>
+                <Plus className="nav-link-icon" style={{ width: '1.1rem', height: '1.1rem', alignItems: 'center' }} />
                 Add Expense
               </Link>
               <div className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span className="nav-link" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                  👤 {user.name}
+                <span className="nav-link" style={{ color: 'rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <User style={{ width: '1rem', height: '1rem' }} />
+                  {user.name}
                 </span>
                 <button 
                   type="button" 
@@ -50,7 +52,10 @@ function Navbar() {
                     cursor: 'pointer',
                     padding: '0.5rem 1rem',
                     borderRadius: '8px',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -65,7 +70,8 @@ function Navbar() {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
-                  🚪 Logout
+                  <LogOut style={{ width: '1rem', height: '1rem' }} />
+                  Logout
                 </button>
               </div>
             </>

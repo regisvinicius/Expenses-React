@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { expenseCreateSchema } from '../../../shared/schemas/expense';
 import { editExpenseSearchSchema, validEditSearchSchema, type EditExpenseSearchParams } from '../../../shared/schemas/search-params';
 import { Calendar } from '@/components/ui/calendar';
+import { Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const createExpenseRoute = createRoute({
@@ -243,9 +244,12 @@ function CreateExpense() {
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 color: 'white',
                 padding: '0.25rem 0.5rem',
-                fontSize: '0.75rem'
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center'
               }}
             >
+              <X className="w-3 h-3 mr-1" />
               Leave
             </Button>
             <Button
@@ -256,9 +260,12 @@ function CreateExpense() {
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 color: 'white',
                 padding: '0.25rem 0.5rem',
-                fontSize: '0.75rem'
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center'
               }}
             >
+              <Save className="w-3 h-3 mr-1" />
               Stay
             </Button>
           </div>
@@ -298,7 +305,7 @@ function CreateExpense() {
               }}
               style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
             >
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group">
                 <form.Field
                   name="title"
                   validators={{
@@ -307,15 +314,7 @@ function CreateExpense() {
                 >
                   {(field) => (
                     <>
-                      <label
-                        htmlFor={field.name}
-                        style={{
-                          display: 'block',
-                          color: 'white',
-                          marginBottom: '0.5rem',
-                          fontWeight: '600'
-                        }}
-                      >
+                      <label htmlFor={field.name} className="form-label">
                         Expense Title
                       </label>
                       <input
@@ -325,26 +324,19 @@ function CreateExpense() {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="e.g., Grocery Shopping"
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          color: 'white',
-                          backdropFilter: 'blur(10px)',
-                          fontSize: '1rem'
-                        }}
+                        className="form-input"
                       />
                       {field.state.meta.errors ? (
-                        <em style={{ color: 'red' }}>{field.state.meta.errors.join(', ')}</em>
+                        <em style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                          {field.state.meta.errors.join(', ')}
+                        </em>
                       ) : null}
                     </>
                   )}
                 </form.Field>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group">
                 <form.Field
                   name="amount"
                   validators={{
@@ -353,15 +345,7 @@ function CreateExpense() {
                 >
                   {(field) => (
                     <>
-                      <label
-                        htmlFor={field.name}
-                        style={{
-                          display: 'block',
-                          color: 'white',
-                          marginBottom: '0.5rem',
-                          fontWeight: '600'
-                        }}
-                      >
+                      <label htmlFor={field.name} className="form-label">
                         Amount ($)
                       </label>
                       <input
@@ -374,26 +358,19 @@ function CreateExpense() {
                         placeholder="0.00"
                         step="0.01"
                         min="0"
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          color: 'white',
-                          backdropFilter: 'blur(10px)',
-                          fontSize: '1rem'
-                        }}
+                        className="form-input"
                       />
                       {field.state.meta.errors ? (
-                        <em style={{ color: 'red' }}>{field.state.meta.errors.join(', ')}</em>
+                        <em style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                          {field.state.meta.errors.join(', ')}
+                        </em>
                       ) : null}
                     </>
                   )}
                 </form.Field>
               </div>
               
-              <div style={{ marginBottom: '2rem' }}>
+              <div className="form-group">
                 <form.Field
                   name="date"
                   validators={{
@@ -402,15 +379,7 @@ function CreateExpense() {
                 >
                   {(field) => (
                     <>
-                      <label
-                        htmlFor={field.name}
-                        style={{
-                          display: 'block',
-                          color: 'white',
-                          marginBottom: '0.5rem',
-                          fontWeight: '600'
-                        }}
-                      >
+                      <label htmlFor={field.name} className="form-label">
                         Date
                       </label>
                       <Calendar 
@@ -426,11 +395,13 @@ function CreateExpense() {
                             field.handleChange('');
                           }
                         }}
-                        className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl"
+                        className="w-full bg-white/8 backdrop-blur-md border border-white/15 rounded-xl"
                         disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                       />
                       {field.state.meta.errors ? (
-                        <em style={{ color: 'red' }}>{field.state.meta.errors.join(', ')}</em>
+                        <em style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                          {field.state.meta.errors.join(', ')}
+                        </em>
                       ) : null}
                     </>
                   )}
@@ -440,18 +411,30 @@ function CreateExpense() {
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                 <button 
                   type="submit" 
-                  className="primary-button"
+                  className="btn-primary"
                   disabled={expenseMutation.isPending}
                 >
-                  {expenseMutation.isPending ? '💾 Saving...' : (isEditMode ? '💾 Update Expense' : '💾 Save Expense')}
+                  {expenseMutation.isPending ? (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Saving...
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Save className="w-4 h-4 mr-2" />
+                      {isEditMode ? 'Update Expense' : 'Save Expense'}
+                    </div>
+                  )}
                 </button>
                 <button 
                   type="button" 
-                  className="primary-button" 
-                  style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                  className="btn-secondary"
                   onClick={handleCancel}
                 >
-                  ❌ Cancel
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </div>
                 </button>
               </div>
             </form>

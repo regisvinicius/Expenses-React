@@ -2,6 +2,7 @@ import { createRoute } from '@tanstack/react-router';
 import { rootRoute } from './__root';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import type { Expense } from "../../../api/db/schema";
@@ -201,104 +202,57 @@ export function Expenses() {
             ) : (
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {dataExpenses?.expenses.map((expense: Expense) => (
-                  <Card
-                    key={expense.id}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '16px',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                      e.currentTarget.style.transform = 'translateY(-5px)';
-                      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
-                    }}
-                  >
-                    <CardContent style={{ padding: '1.5rem' }}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <div style={{ flex: 1 }}>
-                          <CardTitle style={{ 
-                            color: 'white', 
-                            fontSize: '1.2rem',
-                            marginBottom: '0.5rem'
-                          }}>
-                            {expense.title}
-                          </CardTitle>
-                          <CardDescription style={{ 
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '0.9rem',
-                            marginBottom: '0.25rem'
-                          }}>
-                            📅 {new Date(expense.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </CardDescription>
-                          <CardDescription style={{ 
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '0.8rem'
-                          }}>
-                            ID: {expense.id}
-                          </CardDescription>
+                  <div key={expense.id} className="expense-card">
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 className="expense-title">
+                          {expense.title}
+                        </h3>
+                        <div className="expense-date">
+                          📅 {new Date(expense.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                          <p style={{ 
-                            fontWeight: '700', 
-                            fontSize: '1.5rem',
-                            margin: 0,
-                            background: 'linear-gradient(45deg, #00ff88, #00d4ff)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                          }}>
-                            ${expense.amount}
-                          </p>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <Button
-                              size="sm"
-                              onClick={() => handleEditExpense(expense)}
-                              style={{
-                                background: 'rgba(59, 130, 246, 0.2)',
-                                border: '1px solid rgba(59, 130, 246, 0.3)',
-                                color: 'white',
-                                padding: '0.25rem 0.5rem',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              ✏️ Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleDeleteExpense(expense.id, expense.title)}
-                              disabled={deleteExpenseMutation.isPending}
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.2)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                color: 'white',
-                                padding: '0.25rem 0.5rem',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              🗑️ Delete
-                            </Button>
-                          </div>
+                        <div style={{ 
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          fontSize: '0.8rem',
+                          marginTop: '0.25rem'
+                        }}>
+                          ID: {expense.id}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                        <p className="expense-amount">
+                          ${expense.amount}
+                        </p>
+                        <div className="expense-actions">
+                          <Button
+                            className="action-button edit"
+                            onClick={() => handleEditExpense(expense)}
+                            style={{ display: 'flex', alignItems: 'center' }}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            className="action-button delete"
+                            onClick={() => handleDeleteExpense(expense.id, expense.title)}
+                            disabled={deleteExpenseMutation.isPending}
+                            style={{ display: 'flex', alignItems: 'center' }}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
